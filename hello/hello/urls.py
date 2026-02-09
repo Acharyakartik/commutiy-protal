@@ -3,13 +3,16 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
+
+
 
 urlpatterns = [
     # Admin (Developer only)
     path('admin/', admin.site.urls),
 
     # Public + Client app URLs
-    path('', include('home.urls')),
+    path('',TemplateView.as_view(template_name='index.html')),
     path('member/', include('member.urls')),  
    
 

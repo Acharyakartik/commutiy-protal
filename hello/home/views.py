@@ -11,8 +11,8 @@ from django.shortcuts import redirect
 # NO LOGIN REQUIRED
 # =========================
 # api_view(['GET'])
-def index(request):
-    return render(request, "html_home/index.html")
+def index(api_view, request):
+    return render(request, "index.html")
 
 
 
