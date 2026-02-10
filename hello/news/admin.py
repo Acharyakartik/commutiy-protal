@@ -1,19 +1,19 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import News
+from .models import News, Category
 
-# @admin.register(Category)
-# class CategoryAdmin(admin.ModelAdmin):
-#     list_display = ("name", "is_active", "created_at")
-#     prepopulated_fields = {"slug": ("name",)}
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "is_active", "created_at")
+    prepopulated_fields = {"slug": ("name",)}
 
 
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin): # Rename class to NewsAdmin to avoid conflict with model name
     list_display = (
         "title",
-        # "category",
+        "category",
         "status",
         "created_by",
         "created_at",
@@ -22,7 +22,7 @@ class NewsAdmin(admin.ModelAdmin): # Rename class to NewsAdmin to avoid conflict
 
     list_filter = (
         "status",
-        # "category",
+        "category",
     )
 
     search_fields = ("title", "content")
@@ -48,16 +48,15 @@ class NewsAdmin(admin.ModelAdmin): # Rename class to NewsAdmin to avoid conflict
         )
 
     action_buttons.short_description = "Actions"
-    
-def save_model(self, request, obj, form, change):
+
+    def save_model(self, request, obj, form, change):
         try:
             member_profile = request.user.member
             if not obj.pk:
                 obj.created_by = member_profile
             obj.updated_by = member_profile
         except AttributeError:
-            # Fallback if the user is an admin but has no Member profile
-            # You can leave it as None or handle it as a validation error
-            pass 
-            
+            # Admin user without Member profile; leave fields as-is
+            pass
+
         super().save_model(request, obj, form, change)

@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.http import JsonResponse
 
-from .models import News
+from .models import News,Category
 from member.models import Member
 
 
@@ -57,7 +58,7 @@ def news_form(request, pk=None):
     if request.method == "POST":
         title = request.POST.get("title")
         content = request.POST.get("content")
-        # category_id = request.POST.get("category")
+        category_id = request.POST.get("category")
         status = request.POST.get("status")
         image = request.FILES.get("image")
 
@@ -65,7 +66,8 @@ def news_form(request, pk=None):
             # UPDATE
             news.title = title
             news.content = content
-            # news.category_id = category_id
+            # Allow clearing category if blank
+            news.category_id = category_id or None
             news.status = status
             news.updated_by = member
 
@@ -84,7 +86,7 @@ def news_form(request, pk=None):
             News.objects.create(
                 title=title,
                 content=content,
-                # category_id=category_id,
+                category_id=category_id or None,
                 status=status,
                 image=image,
                 created_by=member,
@@ -94,11 +96,11 @@ def news_form(request, pk=None):
 
         return redirect("news:news_list")
 
-    # categories = Category.objects.filter(is_active=True)
+    categories = Category.objects.filter(is_active=True)
 
     return render(request, "html_member/news_form.html", {
         "news": news,
-        # "categories": categories,
+        "categories": categories,
         "status_choices": News.STATUS_CHOICES,
     })
 
@@ -118,3 +120,42 @@ def news_delete(request, pk):
 
     news.delete()
     return redirect("news:news_list")
+
+
+# =====================================================
+# 🌐 PUBLIC JSON APIs
+# =====================================================
+def api_category_list(request):
+    categories = Category.objects.filter(is_active=True).order_by("name")
+    data = [
+        {
+            "id": c.id,
+            "name": c.name,
+            "slug": c.slug,
+        }
+        for c in categories
+    ]
+    return JsonResponse({"count": len(data), "results": data})
+
+
+def api_all_news(request):
+    news_qs = News.objects.select_related("category").order_by("-created_at")
+    results = []
+    for n in news_qs:
+        results.append(
+            {
+                "id": n.id,
+                "title": n.title,
+                "slug": n.slug,
+                "content": n.content,
+                "category": n.category.name if n.category else None,
+                "category_slug": n.category.slug if n.category else None,
+                "status": n.status,
+                "created_at": n.created_at.isoformat() if n.created_at else None,
+                "published_at": n.published_at.isoformat() if n.published_at else None,
+                "image_url": request.build_absolute_uri(n.image.url)
+                if n.image
+                else None,
+            }
+        )
+    return JsonResponse({"count": len(results), "results": results})

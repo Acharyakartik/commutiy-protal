@@ -1,25 +1,26 @@
 from django.db import models
 from django.utils.text import slugify
 from django.conf import settings
-from member.models import Member   # ✅ Using your custom Member model
+from member.models import Member  # ✅ Using your custom Member model
+# from .models import Categorymodel
 
-# class Category(models.Model):
-#     name = models.CharField(max_length=100, unique=True)
-#     slug = models.SlugField(unique=True, blank=True)
-#     is_active = models.BooleanField(default=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(unique=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-#     class Meta:
-#         ordering = ["name"]
-#         verbose_name_plural = "Categories"
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "Categories"
 
-#     def save(self, *args, **kwargs):
-#         if not self.slug:
-#             self.slug = slugify(self.name)
-#         super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
-#     def __str__(self):
-#         return self.name
+    def __str__(self):
+        return self.name
 
 
 class News(models.Model):
@@ -39,12 +40,12 @@ class News(models.Model):
         blank=True
     )
 
-    # category = models.ForeignKey(
-    #     Category,
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     related_name="news_items"
-    # )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="news_items"
+    )
 
     status = models.CharField(
         max_length=10,
@@ -81,9 +82,15 @@ class News(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        # Auto-generate slug from title if not provided
+        # Auto-generate a unique slug from title if not provided
         if not self.slug:
-            self.slug = slugify(self.title)
+            base_slug = slugify(self.title) or "news"
+            slug = base_slug
+            counter = 1
+            while News.objects.filter(slug=slug).exists():
+                counter += 1
+                slug = f"{base_slug}-{counter}"
+            self.slug = slug
         super().save(*args, **kwargs)
 
     def __str__(self):

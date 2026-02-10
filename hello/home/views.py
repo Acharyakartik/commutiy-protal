@@ -14,8 +14,8 @@ from django.conf import settings
 # =========================
 # api_view(['GET'])
 def index(request):
-#    return HttpResponseRedirect(settings.FRONTEND_BASE_URL)
-    return render(request, "html_home/index.html")
+   return HttpResponseRedirect(settings.FRONTEND_BASE_URL)
+    # return render(request, "html_home/index.html")
 
 
 
